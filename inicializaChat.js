@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, FunctionDeclarationSchemaType } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,16 +21,23 @@ const funcoes = {
 const tools = {
     functionDeclaration: [
         {
-           name: "taxaJurosParcelamento",
-           description: "Retorna a taxa de juros para parcelamentos baseado na quantidade de meses",
-           parameters: {
-               
-           } 
+            name: "taxaJurosParcelamento",
+            description: "Retorna a taxa de juros para parcelamentos baseado na quantidade de meses", // Breve descrição do que a função vai fazer
+            parameters: {
+                type: FunctionDeclarationSchemaType.OBJECT, // Tipo da função que to passando
+                properties: {
+                    value: { type: FunctionDeclarationSchemaType.NUMBER } // O que a função recebe de parametro
+                },
+                required: ["value"] // Parametros obrigatórios
+            }
         }
     ]
-}
+};
 
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b-001" });
+const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash-8b-001", 
+    tools,
+});
 
 let chat;
 
