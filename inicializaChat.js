@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, FunctionDeclarationSchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -15,39 +15,27 @@ const funcoes = {
         } else if (meses <= 24) {
             return 7;
         }
+        return 0;
     }
 };
 
-const functionDeclarations = [
-    {
-        name: "taxaJurosParcelamento",
-        description: "Retorna a taxa de juros para parcelamentos baseado na quantidade de meses",
-        parameters: {
-            type: FunctionDeclarationSchemaType.OBJECT,
-            properties: {
-                value: { type: FunctionDeclarationSchemaType.NUMBER }
+const functionDeclarations = [{
+    name: "taxaJurosParcelamento",
+    description: "Retorna a taxa de juros para parcelamentos baseado na quantidade de meses",
+    parameters: {
+        type: "object",
+        properties: {
+            value: { 
+                type: "number",
+                description: "Número de meses para parcelamento"
             }
-        }
+        },
+        required: ["value"]
     }
-];
-
-// Certifique-se de que o payload está corretamente estruturado ao enviar para a API
-const payload = {
-    functionDeclarations: functionDeclarations
-};
-
-// Use o payload na requisição para a API
-genAI.generateContent(payload)
-    .then(response => {
-        console.log(response);
-    })
-    .catch(error => {
-        console.error(error);
-    });
+}];
 
 const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash-8b-001", 
-    tools,
+    model: "gemini-pro"
 });
 
 let chat;
@@ -57,17 +45,36 @@ function inicializaChat() {
         history: [
             {
                 role: "user",
-                parts: [{ text: "Você é Lolão, um chatbot amigável que representa a empresa Jornada Viagens, que vende pacotes turísticos para destinos nacionais e internacionais. Você pode responder mensagens que tenham relação com viagens. No inicio de cada conversa você sempre deve pedir nome da pessoa e o e-mail para contao. Enquanto o usuario não passar essas informações você não deve prosseguir com o atendimento." }],
+                parts: [{
+                    text: "Você é Lolão, um chatbot amigável que representa a empresa Jornada Viagens, que vende pacotes turísticos para destinos nacionais e internacionais. Você pode responder mensagens que tenham relação com viagens. No inicio de cada conversa você sempre deve pedir nome da pessoa e o e-mail para contato. Enquanto o usuario não passar essas informações você não deve prosseguir com o atendimento. Quando o usuário perguntar sobre taxas de juros para parcelamento, use a função taxaJurosParcelamento passando o número de meses para calcular a taxa correta."
+                }]
             },
             {
                 role: "model",
-                parts: [{ text: "Olá sou Lolão! Obrigado por entrar em contato com o Jornada Viagens. Antes de começar a responder sobre suas dúvidas, preciso do seu nome e endereço de e-mail." }],
-            },
+                parts: [{
+                    text: "Olá sou Lolão! Obrigado por entrar em contato com o Jornada Viagens. Antes de começar a responder sobre suas dúvidas, preciso do seu nome e endereço de e-mail."
+                }]
+            }
         ],
         generationConfig: {
             maxOutputTokens: 1000,
-        },
+            temperature: 0.7
+        }
     });
 }
 
-export { inicializaChat, chat, funcoes };
+async function sendMessageWithFunctions(message) {
+    try {
+        const result = await chat.sendMessage(message, {
+            tools: [{
+                functionDeclarations: functionDeclarations
+            }]
+        });
+        return await result.response;
+    } catch (error) {
+        console.error('Erro ao enviar mensagem:', error);
+        throw error;
+    }
+}
+
+export { inicializaChat, chat, funcoes, sendMessageWithFunctions };

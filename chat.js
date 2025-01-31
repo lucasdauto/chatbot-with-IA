@@ -1,42 +1,54 @@
-
-import { chat } from "./inicializaChat.js";
+import { chat, funcoes, sendMessageWithFunctions } from "./inicializaChat.js";
 
 export async function executaChat(mensagem) {
-  console.log("tamanho do historico: " + (await chat.getHistory()).length);
-  const result = await chat.sendMessage(mensagem);
-  const response = await result.response;
+  try {
+    console.log("tamanho do historico: " + (await chat.getHistory()).length);
 
-  const content = response.candidates[0].content;
+    const result = await sendMessageWithFunctions(mensagem);
+    const content = result.candidates[0].content;
 
-  const fc = content.parts[0].functionCall;
-  const text = content.parts.map(({ text }) => text).join("");
-  console.log(text);
-  console.log(fc);
+    // Procura por function calls em qualquer parte do conteúdo
+    const functionCallPart = content.parts.find(part => part.functionCall);
+    const text = content.parts.map(part => part.text || "").join("");
 
-  if (fc) {
-    const { name, args } = fc;
-    const fn = funcoes[name];
-    if (!fn) {
-      throw new Error(`Unknown function "${name}"`);
+    console.log("Resposta inicial:", text);
+
+    if (functionCallPart?.functionCall) {
+      const fc = functionCallPart.functionCall;
+      console.log("Function call detectada:", fc);
+
+      const { name, args } = fc;
+      const fn = funcoes[name];
+
+      if (!fn) {
+        throw new Error(`Unknown function "${name}"`);
+      }
+
+      // Executa a função e obtém o resultado
+      const taxaJuros = fn(args);
+      console.log("Resultado da função:", taxaJuros);
+
+      // Envia o resultado da função de volta para o chat
+      const responseWithResult = await chat.sendMessage({
+        parts: [{
+          functionResponse: {
+            name,
+            response: {
+              name,
+              content: taxaJuros
+            }
+          }
+        }]
+      });
+
+      // Obtém a resposta final formatada
+      const finalResponse = await responseWithResult.response;
+      return finalResponse.text();
     }
-    const fr = {
-      functionResponse: {
-        name,
-        response: {
-          name,
-          content: funcoes[name](args),
-        }
-      },
-    }
 
-    console.log(fr)
-
-    const request2 = [fr];
-    const response2 = await chat.sendMessage(request2);
-    const result2 = response2.response;
-    return result2.text();
-  } else if (text) {
     return text;
+  } catch (error) {
+    console.error("Erro na execução do chat:", error);
+    throw error;
   }
-
 }
