@@ -18,21 +18,32 @@ const funcoes = {
     }
 };
 
-const tools = {
-    functionDeclaration: [
-        {
-            name: "taxaJurosParcelamento",
-            description: "Retorna a taxa de juros para parcelamentos baseado na quantidade de meses", // Breve descrição do que a função vai fazer
-            parameters: {
-                type: FunctionDeclarationSchemaType.OBJECT, // Tipo da função que to passando
-                properties: {
-                    value: { type: FunctionDeclarationSchemaType.NUMBER } // O que a função recebe de parametro
-                },
-                required: ["value"] // Parametros obrigatórios
+const functionDeclarations = [
+    {
+        name: "taxaJurosParcelamento",
+        description: "Retorna a taxa de juros para parcelamentos baseado na quantidade de meses",
+        parameters: {
+            type: FunctionDeclarationSchemaType.OBJECT,
+            properties: {
+                value: { type: FunctionDeclarationSchemaType.NUMBER }
             }
         }
-    ]
+    }
+];
+
+// Certifique-se de que o payload está corretamente estruturado ao enviar para a API
+const payload = {
+    functionDeclarations: functionDeclarations
 };
+
+// Use o payload na requisição para a API
+genAI.generateContent(payload)
+    .then(response => {
+        console.log(response);
+    })
+    .catch(error => {
+        console.error(error);
+    });
 
 const model = genAI.getGenerativeModel({ 
     model: "gemini-1.5-flash-8b-001", 
@@ -59,4 +70,4 @@ function inicializaChat() {
     });
 }
 
-export { inicializaChat, chat };
+export { inicializaChat, chat, funcoes };
