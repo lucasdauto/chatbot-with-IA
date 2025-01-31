@@ -63,18 +63,18 @@ function inicializaChat() {
     });
 }
 
-async function sendMessageWithFunctions(message) {
-    try {
-        const result = await chat.sendMessage(message, {
-            tools: [{
-                functionDeclarations: functionDeclarations
-            }]
-        });
-        return await result.response;
-    } catch (error) {
-        console.error('Erro ao enviar mensagem:', error);
-        throw error;
-    }
+// Função que envia uma mensagem e aguarda a resposta com possíveis chamadas de função
+export async function sendMessageWithFunctions(mensagem) {
+  // Envia a mensagem para o chat e aguarda a resposta
+  const result = await chat.sendMessage(mensagem);
+
+  // Verifica se a resposta contém candidatos
+  if (!result.candidates || result.candidates.length === 0) {
+    throw new Error("Nenhuma resposta candidata encontrada");
+  }
+
+  // Retorna o resultado da mensagem enviada
+  return result;
 }
 
-export { inicializaChat, chat, funcoes, sendMessageWithFunctions };
+export { inicializaChat, chat, funcoes };
