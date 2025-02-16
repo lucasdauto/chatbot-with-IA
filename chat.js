@@ -1,27 +1,36 @@
 import { chat, funcoes, sendMessageWithFunctions } from "./inicializaChat.js";
+import { incorporarDocumentos, incorporarPergunta, leArquivos } from "./embedding.js";
+
+
+const arquivos = await leArquivos(["Pacotes_argentina.txt", "Pacotes_EUA.txt", "Politicas.txt"]);
+const documentos = await incorporarDocumentos(arquivos);
 
 // Função assíncrona que executa o chat com uma mensagem fornecida
 export async function executaChat(mensagem) {
   try {
-    // Loga o tamanho do histórico do chat
-    console.log("tamanho do historico: " + (await chat.getHistory()).length);
+
+    //verificar se uma das perguntas está proxima ao tamanho do documentos
+    let doc = await incorporarPergunta(mensagem, documentos);
+
+    // prompt com o as informações que mais se acemelham a pergunta
+    let prompt = mensagem + " talvez esse trecho possa te ajude a formular a resposta: " + doc.text;
 
     // Envia a mensagem e aguarda a resposta
-    const result = await sendMessageWithFunctions(mensagem);
+    const result = await sendMessageWithFunctions(prompt);
+
+    if (!result.candidates || result.candidates.length === 0) {
+      throw new Error("Nenhuma resposta candidata encontrada");
+    }
+
     const content = result.candidates[0].content;
 
     // Procura por chamadas de função em qualquer parte do conteúdo
     const functionCallPart = content.parts.find(part => part.functionCall);
     const text = content.parts.map(part => part.text || "").join("");
 
-    // Loga a resposta inicial do chat
-    console.log("Resposta inicial:", text);
-
     // Se houver uma chamada de função na resposta
     if (functionCallPart?.functionCall) {
       const fc = functionCallPart.functionCall;
-      // Loga a chamada de função detectada
-      console.log("Function call detectada:", fc);
 
       const { name, args } = fc;
       const fn = funcoes[name];

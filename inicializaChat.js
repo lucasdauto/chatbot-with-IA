@@ -35,7 +35,7 @@ const functionDeclarations = [{
 }];
 
 const model = genAI.getGenerativeModel({ 
-    model: "gemini-pro"
+    model: "gemini-2.0-flash"
 });
 
 let chat;
@@ -65,16 +65,21 @@ function inicializaChat() {
 
 // Função que envia uma mensagem e aguarda a resposta com possíveis chamadas de função
 export async function sendMessageWithFunctions(mensagem) {
-  // Envia a mensagem para o chat e aguarda a resposta
-  const result = await chat.sendMessage(mensagem);
+  try {
+    const result = await chat.sendMessage(mensagem);
 
-  // Verifica se a resposta contém candidatos
-  if (!result.candidates || result.candidates.length === 0) {
-    throw new Error("Nenhuma resposta candidata encontrada");
+    // Verifica se a resposta contém candidatos
+    const candidates = result.response.candidates;
+    if (!candidates || candidates.length === 0) {
+      throw new Error("Nenhuma resposta candidata encontrada");
+    }
+
+    // Retorna o resultado da mensagem enviada
+    return result.response;
+  } catch (error) {
+    console.error("Erro no endpoint do chat:", error);
+    throw error;
   }
-
-  // Retorna o resultado da mensagem enviada
-  return result;
 }
 
 export { inicializaChat, chat, funcoes };
