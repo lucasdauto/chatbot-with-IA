@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
 import { promises as fs} from "fs";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const embeddingModel = genAI.getGenerativeModel({ model: "embedding-001" });
+const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
 async function embedRetrievalQuery(queryText) {
   const result = await embeddingModel.embedContent({
